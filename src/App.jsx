@@ -1,14 +1,26 @@
-function App() {
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-semibold text-slate-900">
-          CRM Investigations
-        </h1>
-        <p className="text-slate-600">Frontend is running with React + Tailwind.</p>
-      </div>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
-
-export default App
