@@ -11,7 +11,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
 
   if (user && (user.role === 'INVESTIGATOR' || user.role === 'SUPER_ADMIN' || user.role === 'MANAGEMENT')) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   async function handleSubmit(e) {
@@ -29,7 +29,7 @@ export default function Login() {
         setError('This portal is for investigators only. Staff should use the Admin CRM.')
         return
       }
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err.message || 'Login failed')
     } finally {

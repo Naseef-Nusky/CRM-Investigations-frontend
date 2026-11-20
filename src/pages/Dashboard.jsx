@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import { useAuth } from '../context/AuthContext'
+import { formatDate, formatStatus, statusBadgeClass } from '../lib/format'
+import PortalHeader from '../components/PortalHeader'
 
 export default function Dashboard() {
-  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -15,36 +15,16 @@ export default function Dashboard() {
       .catch((err) => setError(err.message))
   }, [])
 
-  async function handleLogout() {
-    await logout()
-    navigate('/login')
-  }
-
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="bg-slate-900 text-white">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Investigator portal</p>
-            <h1 className="text-lg font-semibold">Bespoke Investigation CRM</h1>
-          </div>
-          <div className="text-right text-sm">
-            <p>
-              {user?.firstName} {user?.lastName}
-            </p>
-            <button type="button" onClick={handleLogout} className="underline text-slate-300 mt-1">
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+      <PortalHeader />
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">My investigations</h2>
           <p className="text-sm text-slate-600 mt-1">
-            You can only view cases assigned to you. Case detail, evidence upload and report
-            submission arrive in Phases 6–7.
+            You can only view cases assigned to you. Select a case to add progress notes, upload
+            evidence and submit your report.
           </p>
         </div>
 
@@ -74,26 +54,73 @@ export default function Dashboard() {
                   here.
                 </p>
               ) : (
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Reference</th>
-                      <th className="px-4 py-3 font-medium">Client</th>
-                      <th className="px-4 py-3 font-medium">Service</th>
-                      <th className="px-4 py-3 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-50 text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Reference</th>
+                          <th className="px-4 py-3 font-medium">Client</th>
+                          <th className="px-4 py-3 font-medium">Service</th>
+                          <th className="px-4 py-3 font-medium">Due</th>
+                          <th className="px-4 py-3 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.investigations.map((inv) => (
+                          <tr
+                            key={inv.id}
+                            onClick={() => navigate(`/cases/${inv.id}`)}
+                            className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer"
+                          >
+                            <td className="px-4 py-3 font-medium">
+                              <Link
+                                to={`/cases/${inv.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-slate-900 underline decoration-slate-300 hover:decoration-slate-900"
+                              >
+                                {inv.reference}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3">{inv.client?.fullName || '—'}</td>
+                            <td className="px-4 py-3">{inv.service?.name || '—'}</td>
+                            <td className="px-4 py-3">{formatDate(inv.expectedCompletionDate)}</td>
+                            <td className="px-4 py-3">
+                              <span className={statusBadgeClass(inv.status)}>
+                                {formatStatus(inv.status)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile cards */}
+                  <ul className="md:hidden divide-y divide-slate-100">
                     {data.investigations.map((inv) => (
-                      <tr key={inv.id} className="border-t border-slate-100">
-                        <td className="px-4 py-3 font-medium">{inv.reference}</td>
-                        <td className="px-4 py-3">{inv.client?.fullName}</td>
-                        <td className="px-4 py-3">{inv.service?.name || '—'}</td>
-                        <td className="px-4 py-3">{inv.status.replaceAll('_', ' ')}</td>
-                      </tr>
+                      <li key={inv.id}>
+                        <Link to={`/cases/${inv.id}`} className="block px-4 py-3 hover:bg-slate-50">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-medium text-slate-900">{inv.reference}</span>
+                            <span className={statusBadgeClass(inv.status)}>
+                              {formatStatus(inv.status)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {inv.client?.fullName || '—'} · {inv.service?.name || '—'}
+                          </p>
+                          {inv.expectedCompletionDate && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              Due {formatDate(inv.expectedCompletionDate)}
+                            </p>
+                          )}
+                        </Link>
+                      </li>
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                </>
               )}
             </section>
           </>

@@ -34,10 +34,14 @@ export function AuthProvider({ children }) {
     bootstrap()
   }, [])
 
-  async function login(email, password) {
+  async function login(email, password, totpCode) {
     const res = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(totpCode ? { totpCode } : {}),
+      }),
     })
     setAccessToken(res.data.accessToken)
     setUser(res.data.user)
